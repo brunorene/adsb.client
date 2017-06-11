@@ -3,13 +3,13 @@ package pt.brene.adsb.client;
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
+import pt.brene.adsb.client.event.MessageReceiver;
+import pt.brene.adsb.client.message.AdsbMessage;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.stream.Stream;
 
 @Slf4j
 public class AdsbClient {
@@ -28,7 +28,8 @@ public class AdsbClient {
         try (Socket socket = new Socket(host, port);
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), Charsets.UTF_8))) {
             reader.lines()
-                    .map(line -> new AdsbMessage(line))
+                    .map(line -> AdsbMessage.newMessage(line))
+                    .filter(msg -> msg != null)
                     .forEach(bus::post);
         }
     }

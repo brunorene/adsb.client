@@ -1,4 +1,4 @@
-package pt.brene.adsb.client;
+package pt.brene.adsb.client.message;
 
 public enum MessageType {
     ES_IDENTIFICATION_AND_CATEGORY,
