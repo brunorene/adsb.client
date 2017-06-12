@@ -2,15 +2,20 @@ package pt.brene.adsb.client.event;
 
 import com.google.common.eventbus.Subscribe;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.lambda.Seq;
 import pt.brene.adsb.client.message.EsAirbornePosition;
 import pt.brene.adsb.client.message.EsAirborneVelocity;
 import pt.brene.adsb.client.message.EsIdentificationAndCategory;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @SuppressWarnings("unchecked")
@@ -22,6 +27,33 @@ public class MessageReceiver {
 
     public MessageReceiver() {
         Executors.newScheduledThreadPool(1).scheduleWithFixedDelay(() -> {
+            LocalDateTime now = LocalDateTime.now();
+            List<String> keysToRemove = Seq.concat(
+                    positions.entrySet()
+                            .stream()
+                            .filter(entry -> now.minusMinutes(1).isAfter(entry.getValue().first().getDateTimeGenerated()))
+                            .map(entry -> entry.getKey()),
+                    speeds.entrySet()
+                            .stream()
+                            .filter(entry -> now.minusMinutes(1).isAfter(entry.getValue().first().getDateTimeGenerated()))
+                            .map(entry -> entry.getKey()),
+                    identifiers.entrySet()
+                            .stream()
+                            .filter(entry -> now.minusMinutes(1).isAfter(entry.getValue().first().getDateTimeGenerated()))
+                            .map(entry -> entry.getKey()))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue() == 3)
+                    .map(entry -> entry.getKey())
+                    .collect(Collectors.toList());
+            keysToRemove.stream()
+                    .forEach(k -> {
+                        positions.remove(k);
+                        speeds.remove(k);
+                        identifiers.remove(k);
+                        log.info("removing old info from {}", k);
+                    });
         }, 1, 1, TimeUnit.MINUTES);
     }
 
