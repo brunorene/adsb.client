@@ -1,33 +1,31 @@
 package pt.brene.adsb.client.message;
 
-import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 @Slf4j
-@Setter
+@EqualsAndHashCode(exclude = {"dateTimeGenerated", "dateTimeLogged"}, doNotUseGetters = true)
 public abstract class AdsbMessage implements Comparable<AdsbMessage> {
 
-    public static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
 
     protected MessageType messageType;
     protected String sessionId;
     protected String aircraftId;
-    protected String hexId;
+    @Getter
+    private String hexId;
     protected String flightId;
-    protected String dateGenerated;
-    protected String timeGenerated;
-    protected Date dateTimeGenerated;
-    protected String dateLogged;
-    protected String timeLogged;
-    protected Date dateTimeLogged;
+    @Getter
+    private LocalDateTime dateTimeGenerated;
+    @Getter
+    private LocalDateTime dateTimeLogged;
     protected String callSign;
     protected String altitude;
     protected String groundSpeed;
@@ -40,9 +38,6 @@ public abstract class AdsbMessage implements Comparable<AdsbMessage> {
     protected boolean emergency;
     protected boolean spiId;
     protected boolean onGround;
-
-    // MSG,1,,,40676B,,,,,,NLY1VC  ,,,,,,,,0,0,0,0
-    // MSG,3,,,3C666A,,,,,,,1875,,,38.68789,-9.18597,,,0,0,0,
 
     public static AdsbMessage newMessage(String csvFormat) {
         String[] parts = StringUtils.splitPreserveAllTokens(csvFormat, ',');
@@ -66,19 +61,19 @@ public abstract class AdsbMessage implements Comparable<AdsbMessage> {
         message.aircraftId = parts[3];
         message.hexId = parts[4];
         message.flightId = parts[5];
-        message.dateGenerated = parts[6];
-        message.timeGenerated = parts[7];
-        if (message.dateGenerated.isEmpty() || message.timeGenerated.isEmpty()) {
-            message.dateTimeGenerated = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
+        val dateGenerated = parts[6];
+        val timeGenerated = parts[7];
+        if (dateGenerated.isEmpty() || timeGenerated.isEmpty()) {
+            message.dateTimeGenerated = LocalDateTime.now();
         } else {
-            message.dateTimeGenerated = Date.from(Instant.from(formatter.parse(message.dateGenerated + " " + message.timeGenerated)));
+            message.dateTimeGenerated = LocalDateTime.from(formatter.parse(dateGenerated + " " + timeGenerated));
         }
-        message.dateLogged = parts[8];
-        message.timeLogged = parts[9];
-        if (message.dateLogged.isEmpty() || message.timeLogged.isEmpty()) {
-            message.dateTimeLogged = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
+        val dateLogged = parts[8];
+        val timeLogged = parts[9];
+        if (dateLogged.isEmpty() || timeLogged.isEmpty()) {
+            message.dateTimeLogged = LocalDateTime.now();
         } else {
-            message.dateTimeLogged = Date.from(Instant.from(formatter.parse(message.dateLogged + " " + message.timeLogged)));
+            message.dateTimeLogged = LocalDateTime.from(formatter.parse(dateLogged + " " + timeLogged));
         }
         message.callSign = parts[10].trim();
         message.altitude = parts[11];
@@ -122,4 +117,5 @@ public abstract class AdsbMessage implements Comparable<AdsbMessage> {
     public int compareTo(AdsbMessage adsbMessage) {
         return -ObjectUtils.compare(dateTimeGenerated, adsbMessage.dateTimeGenerated);
     }
+
 }
