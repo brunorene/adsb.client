@@ -1,15 +1,14 @@
 package pt.brene.adsb.client.message;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.Date;
 
-public class EsAirborneVelocity extends AdsbMessage implements Serializable {
+public class EsAirborneVelocity extends AdsbMessage {
 
     public String getHexId() {
         return hexId;
     }
 
-    public LocalDateTime getDateTimeGenerated() {
+    public Date getDateTimeGenerated() {
         return dateTimeGenerated;
     }
 

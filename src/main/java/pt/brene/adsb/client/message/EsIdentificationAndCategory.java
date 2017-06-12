@@ -1,20 +1,18 @@
 package pt.brene.adsb.client.message;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.Date;
 
-public class EsIdentificationAndCategory extends AdsbMessage implements Serializable {
+public class EsIdentificationAndCategory extends AdsbMessage {
 
     public String getHexId() {
         return hexId;
     }
 
-    public LocalDateTime getDateTimeGenerated() {
+    public Date getDateTimeGenerated() {
         return dateTimeGenerated;
     }
 
     public String getCallSign() {
         return callSign;
     }
-
 }

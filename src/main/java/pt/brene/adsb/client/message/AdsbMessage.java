@@ -1,13 +1,19 @@
 package pt.brene.adsb.client.message;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 @Slf4j
-public abstract class AdsbMessage {
+@Setter
+public abstract class AdsbMessage implements Comparable<AdsbMessage> {
 
     public static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
 
@@ -18,10 +24,10 @@ public abstract class AdsbMessage {
     protected String flightId;
     protected String dateGenerated;
     protected String timeGenerated;
-    protected LocalDateTime dateTimeGenerated;
+    protected Date dateTimeGenerated;
     protected String dateLogged;
     protected String timeLogged;
-    protected LocalDateTime dateTimeLogged;
+    protected Date dateTimeLogged;
     protected String callSign;
     protected String altitude;
     protected String groundSpeed;
@@ -63,16 +69,16 @@ public abstract class AdsbMessage {
         message.dateGenerated = parts[6];
         message.timeGenerated = parts[7];
         if (message.dateGenerated.isEmpty() || message.timeGenerated.isEmpty()) {
-            message.dateTimeGenerated = LocalDateTime.now();
+            message.dateTimeGenerated = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
         } else {
-            message.dateTimeGenerated = LocalDateTime.from(formatter.parse(message.dateGenerated + " " + message.timeGenerated));
+            message.dateTimeGenerated = Date.from(Instant.from(formatter.parse(message.dateGenerated + " " + message.timeGenerated)));
         }
         message.dateLogged = parts[8];
         message.timeLogged = parts[9];
         if (message.dateLogged.isEmpty() || message.timeLogged.isEmpty()) {
-            message.dateTimeLogged = LocalDateTime.now();
+            message.dateTimeLogged = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
         } else {
-            message.dateTimeLogged = LocalDateTime.from(formatter.parse(message.dateLogged + " " + message.timeLogged));
+            message.dateTimeLogged = Date.from(Instant.from(formatter.parse(message.dateLogged + " " + message.timeLogged)));
         }
         message.callSign = parts[10].trim();
         message.altitude = parts[11];
@@ -86,30 +92,34 @@ public abstract class AdsbMessage {
         message.emergency = parts[19].equals("1");
         message.spiId = parts[20].equals("1");
         message.onGround = parts[21].equals("1");
-        log.info(message.toString());
         return message;
     }
 
     public String toString() {
         String str = getClass().getSimpleName() + "(" +
-                (sessionId.isEmpty() ? "" : ", sessionId=" + sessionId) +
-                (aircraftId.isEmpty() ? "" : ", aircraftId=" + aircraftId) +
-                (hexId.isEmpty() ? "" : ", hexId=" + hexId) +
-                (flightId.isEmpty() ? "" : ", flightId=" + flightId) +
+                (StringUtils.isBlank(sessionId) ? "" : ", sessionId=" + sessionId) +
+                (StringUtils.isBlank(aircraftId) ? "" : ", aircraftId=" + aircraftId) +
+                (StringUtils.isBlank(hexId) ? "" : ", hexId=" + hexId) +
+                (StringUtils.isBlank(flightId) ? "" : ", flightId=" + flightId) +
                 ", dateTimeGenerated=" + dateTimeGenerated +
-                (dateTimeGenerated.equals(dateTimeLogged) ? "" : ", dateTimeLogged=" + dateTimeLogged) +
-                (callSign.isEmpty() ? "" : ", callSign=" + callSign) +
-                (altitude.isEmpty() ? "" : ", altitude=" + altitude) +
-                (groundSpeed.isEmpty() ? "" : ", groundSpeed=" + groundSpeed) +
-                (track.isEmpty() ? "" : ", track=" + track) +
-                (latitude.isEmpty() ? "" : ", latitude=" + latitude) +
-                (longitude.isEmpty() ? "" : ", longitude=" + longitude) +
-                (verticalRate.isEmpty() ? "" : ", verticalRate=" + verticalRate) +
-                (squawk.isEmpty() ? "" : ", squawk=" + squawk) +
+                (dateTimeLogged == null || (dateTimeGenerated != null && dateTimeGenerated.equals(dateTimeLogged)) ? "" : ", dateTimeLogged=" + dateTimeLogged) +
+                (StringUtils.isBlank(callSign) ? "" : ", callSign=" + callSign) +
+                (StringUtils.isBlank(altitude) ? "" : ", altitude=" + altitude) +
+                (StringUtils.isBlank(groundSpeed) ? "" : ", groundSpeed=" + groundSpeed) +
+                (StringUtils.isBlank(track) ? "" : ", track=" + track) +
+                (StringUtils.isBlank(latitude) ? "" : ", latitude=" + latitude) +
+                (StringUtils.isBlank(longitude) ? "" : ", longitude=" + longitude) +
+                (StringUtils.isBlank(verticalRate) ? "" : ", verticalRate=" + verticalRate) +
+                (StringUtils.isBlank(squawk) ? "" : ", squawk=" + squawk) +
                 (squawkChangedAlert ? ", squawkChangedAlert=" + squawkChangedAlert : "") +
                 (emergency ? ", emergency=" + emergency : "") +
                 (spiId ? ", spiId=" + spiId : "") +
                 (onGround ? ", onGround=" + onGround : "") + ")";
         return str.replaceFirst("\\(, ", "(");
+    }
+
+    @Override
+    public int compareTo(AdsbMessage adsbMessage) {
+        return -ObjectUtils.compare(dateTimeGenerated, adsbMessage.dateTimeGenerated);
     }
 }
