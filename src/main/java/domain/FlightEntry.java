@@ -1,15 +1,19 @@
 package domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 @Data
-@RequiredArgsConstructor
-public class FlightEntry {
+@AllArgsConstructor
+@NoArgsConstructor
+public class FlightEntry implements Serializable {
 
-    private final String flightId;
-    private final double latitude;
-    private final double longitude;
-    private final double altitude;
-    private final double speed;
+    private String flightId;
+    private double latitude;
+    private double longitude;
+    private double altitude;
+    private double speed;
 }
