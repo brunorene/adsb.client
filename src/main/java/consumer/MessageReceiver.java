@@ -3,7 +3,6 @@ package consumer;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import domain.FlightEntry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Seq;
@@ -12,8 +11,8 @@ import pt.brene.adsb.client.message.EsAirborneVelocity;
 import pt.brene.adsb.client.message.EsIdentificationAndCategory;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Executors;
@@ -100,7 +99,7 @@ public class MessageReceiver {
                 , positions.get(hexId).first().getLongitude()
                 , positions.get(hexId).first().getAltitude()
                 , speeds.get(hexId).first().getGroundSpeed())) {
-            bus.post(new FlightEntry(identifiers.get(hexId).first().getCallSign()
+            bus.post(new FlightEntry(new Date(), identifiers.get(hexId).first().getCallSign()
                     , Double.parseDouble(positions.get(hexId).first().getLatitude())
                     , Double.parseDouble(positions.get(hexId).first().getLongitude())
                     , Double.parseDouble(positions.get(hexId).first().getAltitude())

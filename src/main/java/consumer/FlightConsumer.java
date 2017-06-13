@@ -5,13 +5,12 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import domain.FlightEntry;
 import lombok.extern.slf4j.Slf4j;
-import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
-import java.util.Date;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
-import static org.mapdb.Serializer.DATE;
 import static org.mapdb.Serializer.ELSA;
 
 @Slf4j
@@ -22,20 +21,20 @@ public class FlightConsumer {
             .closeOnJvmShutdown()
             .make();
     private final UUID key;
-    private final BTreeMap<Date, FlightEntry> map;
+    private final NavigableSet<FlightEntry> set;
 
     @SuppressWarnings("unchecked")
     public FlightConsumer(UUID key) {
         this.key = key;
-        map = db.treeMap("flight" + key, DATE, ELSA).createOrOpen();
+        set = (NavigableSet<FlightEntry>) db.treeSet("flight" + key, ELSA).counterEnable().createOrOpen();
     }
 
     @Subscribe
     @AllowConcurrentEvents
     public void newFlightEntry(FlightEntry entry) {
-        map.put(new Date(), entry);
+        set.add(entry);
         db.commit();
-        log.info("new flight entry for {}: {}", key, map.lastEntry());
+        log.info("new flight entry for {}: {}", key, set.first());
     }
 
 }
