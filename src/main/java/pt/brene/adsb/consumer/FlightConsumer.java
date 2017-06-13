@@ -1,40 +1,35 @@
-package consumer;
+package pt.brene.adsb.consumer;
 
 import com.eaio.uuid.UUID;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import domain.FlightEntry;
+import pt.brene.adsb.domain.FlightEntry;
 import lombok.extern.slf4j.Slf4j;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
 
 import java.util.NavigableSet;
-import java.util.TreeSet;
 
 import static org.mapdb.Serializer.ELSA;
+import static pt.brene.adsb.client.AdsbClient.CONSUMERS_DB;
 
 @Slf4j
 public class FlightConsumer {
 
-    private static final DB db = DBMaker.fileDB("consumers.db")
-            .transactionEnable()
-            .closeOnJvmShutdown()
-            .make();
+    public static final String FLIGHT = "flight";
+
     private final UUID key;
     private final NavigableSet<FlightEntry> set;
 
     @SuppressWarnings("unchecked")
     public FlightConsumer(UUID key) {
         this.key = key;
-        set = (NavigableSet<FlightEntry>) db.treeSet("flight" + key, ELSA).counterEnable().createOrOpen();
+        set = (NavigableSet<FlightEntry>) CONSUMERS_DB.treeSet(FLIGHT + key, ELSA).counterEnable().createOrOpen();
     }
 
     @Subscribe
     @AllowConcurrentEvents
     public void newFlightEntry(FlightEntry entry) {
         set.add(entry);
-        db.commit();
-        log.info("new flight entry for {}: {}", key, set.first());
+        CONSUMERS_DB.commit();
     }
 
 }

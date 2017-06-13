@@ -1,8 +1,8 @@
-package consumer;
+package pt.brene.adsb.consumer;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import domain.FlightEntry;
+import pt.brene.adsb.domain.FlightEntry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Seq;
@@ -99,11 +99,20 @@ public class MessageReceiver {
                 , positions.get(hexId).first().getLongitude()
                 , positions.get(hexId).first().getAltitude()
                 , speeds.get(hexId).first().getGroundSpeed())) {
-            bus.post(new FlightEntry(new Date(), identifiers.get(hexId).first().getCallSign()
+            bus.post(new FlightEntry(new Date(), identifiers.get(hexId).pollFirst().getCallSign()
                     , Double.parseDouble(positions.get(hexId).first().getLatitude())
                     , Double.parseDouble(positions.get(hexId).first().getLongitude())
-                    , Double.parseDouble(positions.get(hexId).first().getAltitude())
-                    , Double.parseDouble(speeds.get(hexId).first().getGroundSpeed())));
+                    , Double.parseDouble(positions.get(hexId).pollFirst().getAltitude())
+                    , Double.parseDouble(speeds.get(hexId).pollFirst().getGroundSpeed())));
+            if (identifiers.get(hexId).isEmpty()) {
+                identifiers.remove(hexId);
+            }
+            if (positions.get(hexId).isEmpty()) {
+                positions.remove(hexId);
+            }
+            if (speeds.get(hexId).isEmpty()) {
+                speeds.remove(hexId);
+            }
         }
     }
 

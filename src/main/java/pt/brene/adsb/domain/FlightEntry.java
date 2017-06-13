@@ -1,7 +1,8 @@
-package domain;
+package pt.brene.adsb.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(exclude = "timestamp")
 public class FlightEntry implements Serializable, Comparable<FlightEntry> {
 
     private Date timestamp;
@@ -22,6 +24,9 @@ public class FlightEntry implements Serializable, Comparable<FlightEntry> {
 
     @Override
     public int compareTo(@NotNull FlightEntry flightEntry) {
+        if (equals(flightEntry)) {
+            return 0;
+        }
         return -timestamp.compareTo(flightEntry.getTimestamp());
     }
 }
