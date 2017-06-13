@@ -1,7 +1,11 @@
-package pt.brene.adsb.client.event;
+package consumer;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import domain.FlightEntry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Seq;
 import pt.brene.adsb.client.message.EsAirbornePosition;
 import pt.brene.adsb.client.message.EsAirborneVelocity;
@@ -25,7 +29,10 @@ public class MessageReceiver {
     private final TreeMap<String, TreeSet<EsAirborneVelocity>> speeds = new TreeMap<>();
     private final TreeMap<String, TreeSet<EsIdentificationAndCategory>> identifiers = new TreeMap<>();
 
-    public MessageReceiver() {
+    private final EventBus bus;
+
+    public MessageReceiver(EventBus bus) {
+        this.bus = bus;
         Executors.newScheduledThreadPool(1).scheduleWithFixedDelay(() -> {
             LocalDateTime now = LocalDateTime.now();
             List<String> keysToRemove = Seq.concat(
@@ -85,12 +92,20 @@ public class MessageReceiver {
     }
 
     private void logFlight(String hexId) {
-        log.info("id: {} coord: {},{} alt: {} speed: {}",
-                Optional.ofNullable(identifiers.get(hexId)).map(item -> item.first().getCallSign()).orElse("-"),
-                Optional.ofNullable(positions.get(hexId)).map(item -> item.first().getLatitude()).orElse("-"),
-                Optional.ofNullable(positions.get(hexId)).map(item -> item.first().getLongitude()).orElse("-"),
-                Optional.ofNullable(positions.get(hexId)).map(item -> item.first().getAltitude()).orElse("-"),
-                Optional.ofNullable(speeds.get(hexId)).map(item -> item.first().getGroundSpeed()).orElse("-"));
+        if (identifiers.containsKey(hexId)
+                && positions.containsKey(hexId)
+                && speeds.containsKey(hexId)
+                && StringUtils.isNoneBlank(identifiers.get(hexId).first().getCallSign()
+                , positions.get(hexId).first().getLatitude()
+                , positions.get(hexId).first().getLongitude()
+                , positions.get(hexId).first().getAltitude()
+                , speeds.get(hexId).first().getGroundSpeed())) {
+            bus.post(new FlightEntry(identifiers.get(hexId).first().getCallSign()
+                    , Double.parseDouble(positions.get(hexId).first().getLatitude())
+                    , Double.parseDouble(positions.get(hexId).first().getLongitude())
+                    , Double.parseDouble(positions.get(hexId).first().getAltitude())
+                    , Double.parseDouble(speeds.get(hexId).first().getGroundSpeed())));
+        }
     }
 
 }
